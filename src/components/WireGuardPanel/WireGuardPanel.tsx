@@ -138,24 +138,32 @@ export default function WireGuardPanel() {
     const iframe = ref.current
     if (!iframe) return
 
+    let timer: ReturnType<typeof setInterval>
+
     const inject = () => {
       try {
         const doc = iframe.contentDocument
-        if (!doc) return
-        if (doc.getElementById('dashka-dark')) return
-        const style = doc.createElement('style')
-        style.id = 'dashka-dark'
-        style.textContent = DARK_CSS
-        doc.head.appendChild(style)
+        if (!doc || !doc.head || !doc.body) return false
+
+        // Inject dark styles
+        if (!doc.getElementById('dashka-dark')) {
+          const style = doc.createElement('style')
+          style.id = 'dashka-dark'
+          style.textContent = DARK_CSS
+          doc.head.appendChild(style)
+        }
 
         // Isolate the Clients block, hide everything else
         if (!doc.getElementById('dashka-isolate')) {
+          const card = doc.querySelector('.shadow-md.rounded-lg.bg-white.overflow-hidden')
+          if (!card) return false
+
           const script = doc.createElement('script')
           script.id = 'dashka-isolate'
           script.textContent = `
             (function isolateClients() {
               var card = document.querySelector('.shadow-md.rounded-lg.bg-white.overflow-hidden');
-              if (!card) { setTimeout(isolateClients, 100); return; }
+              if (!card) return;
               var el = card;
               while (el.parentElement) {
                 Array.from(el.parentElement.children).forEach(function(s) {
@@ -173,13 +181,28 @@ export default function WireGuardPanel() {
           `
           doc.body.appendChild(script)
         }
+
+        return true
       } catch {
         // cross-origin — ignore
+        return true
       }
     }
 
-    iframe.addEventListener('load', inject)
-    return () => iframe.removeEventListener('load', inject)
+    const startPolling = () => {
+      if (inject()) return
+      timer = setInterval(() => {
+        if (inject()) clearInterval(timer)
+      }, 200)
+    }
+
+    iframe.addEventListener('load', startPolling)
+    startPolling()
+
+    return () => {
+      clearInterval(timer)
+      iframe.removeEventListener('load', startPolling)
+    }
   }, [])
 
   return (
