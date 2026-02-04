@@ -68,10 +68,11 @@ export default function App() {
   const [layouts, setLayouts] = useState(loadLayouts)
   const layoutsRef = useRef(layouts)
 
-  const onLayoutChange = useCallback((_current: Layout[], allLayouts: ResponsiveLayouts) => {
-    layoutsRef.current = allLayouts
-    setLayouts(allLayouts)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(allLayouts))
+  const onLayoutChange = useCallback((_current: Layout, allLayouts: Partial<Record<string, Layout>>) => {
+    const l = allLayouts as ResponsiveLayouts
+    layoutsRef.current = l
+    setLayouts(l)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(l))
   }, [])
 
   useEffect(() => {
