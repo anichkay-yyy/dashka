@@ -185,7 +185,7 @@ export default function WireGuardPanel() {
   return (
     <iframe
       ref={ref}
-      src="/wg/"
+      src="http://172.23.114.229:51821/"
       className="w-full h-full border-none rounded-b-2xl"
       style={{ minHeight: '400px', background: '#0d1117' }}
       title="WireGuard"
