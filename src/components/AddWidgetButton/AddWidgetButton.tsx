@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { Plus, X, Settings2 } from 'lucide-react'
-import { ANALYTICS_WIDGET_TYPES, type AnalyticsWidgetConfig, type AnalyticsWidgetType } from '../../types'
+import { ANALYTICS_WIDGET_TYPES, type WidgetConfig, type AnalyticsWidgetType } from '../../types'
 import { getAnalyticsBaseUrl, setAnalyticsBaseUrl } from '../AnalyticsWidget/AnalyticsWidget'
 
 interface Props {
-  onAdd: (widget: AnalyticsWidgetConfig) => void
+  onAdd: (widget: WidgetConfig) => void
 }
+
+type WidgetCategory = 'analytics' | 'backlog'
 
 export default function AddWidgetButton({ onAdd }: Props) {
   const [open, setOpen] = useState(false)
+  const [category, setCategory] = useState<WidgetCategory>('backlog')
   const [type, setType] = useState<AnalyticsWidgetType>('stats')
   const [siteId, setSiteId] = useState('')
   const [showSettings, setShowSettings] = useState(false)
@@ -17,13 +20,29 @@ export default function AddWidgetButton({ onAdd }: Props) {
   const selected = ANALYTICS_WIDGET_TYPES.find((t) => t.value === type)!
 
   const handleAdd = () => {
-    const id = `analytics-${Date.now()}`
-    const title = selected.needsSiteId
-      ? `${selected.label} — ${siteId}`
-      : selected.label
-    onAdd({ id, type, siteId: selected.needsSiteId ? siteId : '', title })
-    setSiteId('')
-    setOpen(false)
+    if (category === 'backlog') {
+      const id = `backlog-${Date.now()}`
+      onAdd({
+        id,
+        title: 'Бэклог',
+        widgetType: 'backlog',
+      })
+      setOpen(false)
+    } else {
+      const id = `analytics-${Date.now()}`
+      const title = selected.needsSiteId
+        ? `${selected.label} — ${siteId}`
+        : selected.label
+      onAdd({
+        id,
+        type,
+        siteId: selected.needsSiteId ? siteId : '',
+        title,
+        widgetType: 'analytics',
+      })
+      setSiteId('')
+      setOpen(false)
+    }
   }
 
   const handleSaveUrl = () => {
@@ -87,27 +106,59 @@ export default function AddWidgetButton({ onAdd }: Props) {
 
             <div className="mb-4">
               <label className="block text-xs text-muted-foreground uppercase tracking-wide mb-2">
-                Тип виджета
+                Категория
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {ANALYTICS_WIDGET_TYPES.map((wt) => (
-                  <button
-                    key={wt.value}
-                    onClick={() => setType(wt.value)}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                      type === wt.value
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/40'
-                    }`}
-                  >
-                    <div className="text-sm font-medium">{wt.label}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{wt.description}</div>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <button
+                  onClick={() => setCategory('backlog')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    category === 'backlog'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <div className="text-sm font-medium">Бэклог</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Список задач</div>
+                </button>
+                <button
+                  onClick={() => setCategory('analytics')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    category === 'analytics'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <div className="text-sm font-medium">Аналитика</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Статистика сайтов</div>
+                </button>
               </div>
             </div>
 
-            {selected.needsSiteId && (
+            {category === 'analytics' && (
+              <div className="mb-4">
+                <label className="block text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                  Тип виджета
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {ANALYTICS_WIDGET_TYPES.map((wt) => (
+                    <button
+                      key={wt.value}
+                      onClick={() => setType(wt.value)}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        type === wt.value
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/40'
+                      }`}
+                    >
+                      <div className="text-sm font-medium">{wt.label}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{wt.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {category === 'analytics' && selected.needsSiteId && (
               <div className="mb-5">
                 <label className="block text-xs text-muted-foreground uppercase tracking-wide mb-2">
                   Site ID
@@ -124,7 +175,7 @@ export default function AddWidgetButton({ onAdd }: Props) {
 
             <button
               onClick={handleAdd}
-              disabled={selected.needsSiteId && !siteId.trim()}
+              disabled={category === 'analytics' && selected.needsSiteId && !siteId.trim()}
               className="w-full py-2.5 bg-primary text-primary-foreground rounded-xl font-medium hover:brightness-125 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               Добавить

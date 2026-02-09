@@ -15,7 +15,16 @@ export interface AnalyticsWidgetConfig {
   type: AnalyticsWidgetType;
   siteId: string;
   title: string;
+  widgetType: 'analytics';
 }
+
+export interface BacklogWidgetConfig {
+  id: string;
+  title: string;
+  widgetType: 'backlog';
+}
+
+export type WidgetConfig = AnalyticsWidgetConfig | BacklogWidgetConfig;
 
 export const ANALYTICS_WIDGET_TYPES: { value: AnalyticsWidgetType; label: string; description: string; needsSiteId: boolean }[] = [
   { value: 'stats', label: 'Stats', description: 'Просмотры, сессии, посетители', needsSiteId: true },

@@ -6,10 +6,11 @@ import {
   type ResponsiveLayouts,
 } from 'react-grid-layout'
 
-import type { AnalyticsWidgetConfig } from './types'
+import type { WidgetConfig } from './types'
 import RepoGrid from './components/RepoGrid/RepoGrid'
 import WireGuardPanel from './components/WireGuardPanel/WireGuardPanel'
 import AnalyticsWidget from './components/AnalyticsWidget/AnalyticsWidget'
+import BacklogWidget from './components/BacklogWidget/BacklogWidget'
 import AddWidgetButton from './components/AddWidgetButton/AddWidgetButton'
 import { X } from 'lucide-react'
 
@@ -47,7 +48,7 @@ function loadLayouts(): ResponsiveLayouts {
   return STATIC_LAYOUTS
 }
 
-function loadWidgets(): AnalyticsWidgetConfig[] {
+function loadWidgets(): WidgetConfig[] {
   try {
     const raw = localStorage.getItem(WIDGETS_KEY)
     if (raw) return JSON.parse(raw)
@@ -55,7 +56,7 @@ function loadWidgets(): AnalyticsWidgetConfig[] {
   return []
 }
 
-function saveWidgets(widgets: AnalyticsWidgetConfig[]) {
+function saveWidgets(widgets: WidgetConfig[]) {
   localStorage.setItem(WIDGETS_KEY, JSON.stringify(widgets))
 }
 
@@ -128,7 +129,7 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', save)
   }, [])
 
-  const handleAddWidget = useCallback((config: AnalyticsWidgetConfig) => {
+  const handleAddWidget = useCallback((config: WidgetConfig) => {
     setWidgets((prev) => {
       const next = [...prev, config]
       saveWidgets(next)
@@ -193,8 +194,16 @@ export default function App() {
         </div>
         {widgets.map((w) => (
           <div key={w.id}>
-            <Widget title={w.title} noPad onRemove={() => handleRemoveWidget(w.id)}>
-              <AnalyticsWidget config={w} />
+            <Widget
+              title={w.title}
+              noPad={w.widgetType === 'analytics'}
+              onRemove={() => handleRemoveWidget(w.id)}
+            >
+              {w.widgetType === 'analytics' ? (
+                <AnalyticsWidget config={w} />
+              ) : w.widgetType === 'backlog' ? (
+                <BacklogWidget widgetId={w.id} />
+              ) : null}
             </Widget>
           </div>
         ))}
